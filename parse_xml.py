@@ -21,6 +21,7 @@ urls_to_download = []
 total_size = 0
 
 def download_file(data):
+    global number_of_files
     destination, url = data
     print(url)
     destination = os.path.join(raster_data_dir, destination)
@@ -29,10 +30,13 @@ def download_file(data):
         with open(destination, 'wb') as file:
             for chunk in response.iter_content(chunk_size=8192):
                 file.write(chunk)
-    print(f"Finished {destination}")
+    number_of_files -= 1
+    print(number_of_files)
+    # print(f"Finished {destination}")
 
 def download_metalink(metadata):
         global total_size
+        global number_of_files
         root = ET.fromstring(metadata)
 
         for file_element in root.findall(".//{urn:ietf:params:xml:ns:metalink}file"):
@@ -71,14 +75,16 @@ def read_file(filename):
 
 
 metadata_files = os.listdir(resources_dir)
+
 for filename in metadata_files:
-    if '96' in filename:
+    if '97' in filename:
         read_file(os.path.join(resources_dir, filename))
 print(total_size)
 gigabytes_value = total_size / (1024 ** 2)
 
 print(f"{total_size} kilobytes is approximately {gigabytes_value:.2f} gigabytes.")
 
+number_of_files = len(urls_to_download)
 # download in parallel
 p = ThreadPool(10)
 xs = p.map(download_file, urls_to_download)
