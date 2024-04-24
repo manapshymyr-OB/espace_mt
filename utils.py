@@ -19,7 +19,7 @@ def read_shp(shp_filename):
 
 def get_data():
     get_building_geom = """SELECT building_geom as geom, building_id
-    FROM public.nutz_building where vv_desc_mean is null ;"""
+    FROM public.nutz_building_2 where ndvi_mean is null ;"""
 
     gdf = gpd.read_postgis(get_building_geom, engine)
     # gdf.to_file('buildings.geojson', driver="GeoJSON")

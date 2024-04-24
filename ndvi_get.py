@@ -1,4 +1,5 @@
 import concurrent
+import time
 from concurrent.futures import ThreadPoolExecutor
 from typing import Dict, Any
 
@@ -11,6 +12,7 @@ from shapely.geometry import shape, Polygon
 from sqlalchemy import create_engine, text
 import numpy as np
 import math
+import stackstac
 
 from utils import get_data
 
@@ -80,11 +82,14 @@ def process_geom(id, geom):
     Process a single geometry: search for items and update database.
     This function is intended to be executed in a thread pool.
     """
+    time_of_interest = "2019-06-01/2019-08-01"
     while True:
         try:
-            search = catalog.search(collections=["sentinel-1-rtc"], datetime="2023-04-01/2023-11-01",
-                                    query=["s1:resolution=high", 'sat:orbit_state=ascending'], intersects=geom)
+
+            search = catalog.search(collections=["sentinel-2-l2a"], datetime="2023-08-01/2023-09-01",
+                                    query={"eo:cloud_cover": {"lt": 10}}, intersects=geom)
             items = search.item_collection()
+
             print(f'here - {geom}')
             # print(items)
             break
@@ -92,16 +97,22 @@ def process_geom(id, geom):
             print(e)
             continue
 
+    for item in items:
+        print(item.id, ":", item.properties['eo:cloud_cover'])
     item, coverage = get_highest_intersection(items, geom)
     if item:
         try:
+            # print(item.assets)
+            print(item.id, ":", item.properties['eo:cloud_cover'])
+
+            # print(item.assets)
+            # time.sleep(3213)
             # print(item.description)
-            vh_uri = item.assets["vh"].href
-            vv_uri = item.assets["vv"].href
-            print(vh_uri, vv_uri)
-            vh = rioxarray.open_rasterio(vh_uri, masked=True)
-            vv = rioxarray.open_rasterio(vv_uri, masked=True)
-            target_crs = vh.rio.crs
+            red = item.assets["B04"].href
+            nir = item.assets["B08"].href
+            red = rioxarray.open_rasterio(red, masked=True)
+            nir = rioxarray.open_rasterio(nir, masked=True)
+            target_crs = red.rio.crs
             # # print(target_crs)
             #
             # Create a PyProj transformer object to perform the CRS transformation
@@ -126,16 +137,24 @@ def process_geom(id, geom):
             print(transformed_polygon)
             # print("Transformed Polygon:", transformed_polygon)
             # Display the reprojected bounding box
-            vh_clip = vh.rio.clip_box(*transformed_polygon.bounds)
-            vv_clip = vv.rio.clip_box(*transformed_polygon.bounds)
-            mean_vh = np.mean(vh_clip.values)
-            mean_vv = np.mean(vv_clip.values)
-            print(mean_vh, mean_vv)
-            if math.isnan(mean_vh):
-                mean_vh = 'null'
-            if math.isnan(mean_vv):
-                mean_vv = 'null'
-            update_qry = text(f"UPDATE public.nutz_building SET vh_asc_mean = {mean_vh}, vv_asc_mean = {mean_vv} WHERE building_id = {id};")
+            red_clip = red.rio.clip_box(*transformed_polygon.bounds)
+            nir_clip = nir.rio.clip_box(*transformed_polygon.bounds)
+            red_clip_matched = red_clip.rio.reproject_match(nir_clip)
+            ndvi = (nir_clip - red_clip_matched) / (nir_clip + red_clip_matched)
+            print(ndvi)
+
+            max_ndvi = np.nanmax(ndvi.values)
+            min_ndvi = np.nanmin(ndvi.values)
+            mean_ndvi = np.nanmean(ndvi.values)
+            print(max_ndvi, min_ndvi, mean_ndvi)
+            time.sleep(32131)
+            if math.isnan(max_ndvi):
+                max_ndvi = 'null'
+            if math.isnan(min_ndvi):
+                min_ndvi = 'null'
+            if math.isnan(mean_ndvi):
+                mean_ndvi = 'null'
+            update_qry = text(f"UPDATE public.nutz_building_2 SET ndvi_mean = {mean_ndvi}, ndvi_max = {max_ndvi}, ndvi_min = {min_ndvi} WHERE building_id = {id};")
 
             with engine.begin() as conn:  # Ensures the connection is properly closed after operation
                 conn.execute(update_qry)
@@ -149,7 +168,7 @@ def process_geom(id, geom):
 def main():
     data = get_data()
     # print(data)
-    with ThreadPoolExecutor(max_workers=20) as executor:
+    with ThreadPoolExecutor(max_workers=1) as executor:
         futures = [executor.submit(process_geom, id, geom) for id, geom in data.items()]
 
         for future in concurrent.futures.as_completed(futures):
