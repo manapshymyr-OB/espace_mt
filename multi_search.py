@@ -82,7 +82,7 @@ def process_geom(id, geom):
     while True:
         try:
             search = catalog.search(collections=["sentinel-1-rtc"], datetime="2023-08-01/2023-09-01",
-                                    query=["s1:resolution=high", 'sat:orbit_state=descending'], intersects=geom)
+                                    query=["s1:resolution=high", 'sat:orbit_state=ascending'], intersects=geom)
             items = search.item_collection()
             print(f'here - {geom}')
             # print(items)
