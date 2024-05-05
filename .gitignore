@@ -1,5 +1,8 @@
 raster_data
-raster_data
+buiilding_data/*
+ndvi_chunks/*
+!ndvi_chunks/.gitkeep
+!buiilding_data/.gitkeep
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]

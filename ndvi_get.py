@@ -86,8 +86,8 @@ def process_geom(id, geom):
     while True:
         try:
 
-            search = catalog.search(collections=["sentinel-2-l2a"], datetime="2023-08-01/2023-09-01",
-                                    query={"eo:cloud_cover": {"lt": 10}}, intersects=geom)
+            search = catalog.search(collections=["sentinel-2-l2a"], datetime="2023-05-01/2023-08-01",
+                                    query={"eo:cloud_cover": {"lt": 60}}, intersects=geom)
             items = search.item_collection()
 
             print(f'here - {geom}')
@@ -147,14 +147,14 @@ def process_geom(id, geom):
             min_ndvi = np.nanmin(ndvi.values)
             mean_ndvi = np.nanmean(ndvi.values)
             print(max_ndvi, min_ndvi, mean_ndvi)
-            time.sleep(32131)
+            # time.sleep(32131)
             if math.isnan(max_ndvi):
                 max_ndvi = 'null'
             if math.isnan(min_ndvi):
                 min_ndvi = 'null'
             if math.isnan(mean_ndvi):
                 mean_ndvi = 'null'
-            update_qry = text(f"UPDATE public.nutz_building_2 SET ndvi_mean = {mean_ndvi}, ndvi_max = {max_ndvi}, ndvi_min = {min_ndvi} WHERE building_id = {id};")
+            update_qry = text(f"UPDATE public.nutz_building SET ndvi_mean = {mean_ndvi}, ndvi_max = {max_ndvi}, ndvi_min = {min_ndvi} WHERE building_id = {id};")
 
             with engine.begin() as conn:  # Ensures the connection is properly closed after operation
                 conn.execute(update_qry)
@@ -168,12 +168,14 @@ def process_geom(id, geom):
 def main():
     data = get_data()
     # print(data)
-    with ThreadPoolExecutor(max_workers=1) as executor:
-        futures = [executor.submit(process_geom, id, geom) for id, geom in data.items()]
+    # with ThreadPoolExecutor(max_workers=20) as executor:
+    #     futures = [executor.submit(process_geom, id, geom) for id, geom in data.items()]
+    #
+    #     for future in concurrent.futures.as_completed(futures):
+    #         id, coverage = future.result()
+    #         print(f"Processed building ID {id} with coverage {coverage}%")
 
-        for future in concurrent.futures.as_completed(futures):
-            id, coverage = future.result()
-            print(f"Processed building ID {id} with coverage {coverage}%")
+
 
 
 if __name__ == "__main__":
