@@ -7,6 +7,7 @@ pickle_chunk = f'ndvi_chunks/{pickle_file}.pickle'
 with open(pickle_chunk, "rb") as f:
     building_ids = pickle.load(f).keys()
 ndvi = []
+counter = 0
 for id in building_ids:
     try:
         ndvi_pickle_file = os.path.join(data_dir, str(id))
@@ -14,10 +15,12 @@ for id in building_ids:
              ndvi_df = pickle.load(f)
 
         ndvi.append(ndvi_df)
+        counter+=1
     except Exception as e:
         print(e)
     # print(id)
 
+print(counter)
 df = pd.concat(ndvi)
 
 df.to_pickle(f'ndvi_{pickle_file}')
