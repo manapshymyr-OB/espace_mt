@@ -40,7 +40,7 @@ engine = create_engine(f'postgresql://postgres:postgres@localhost:5432/postgres'
 
 def get_data():
     get_building_geom = """SELECT st_transform(st_buffer(st_transform(building_geom, 3857), 100), 4326) as geom, building_id
-    FROM public.nutz_building where building_id <= 50000 order by building_id"""
+    FROM public.nutz_building where building_id <= 50000 and ndvi_calc is null order by building_id"""
 
     gdf = gpd.read_postgis(get_building_geom, engine)
     # gdf.to_file('buildings.geojson', driver="GeoJSON")
@@ -79,7 +79,7 @@ def process_geom(id, geom):
         perc = intersection_percent(item, geom)
         if perc >= 80:
             new_items.append(item)
-            print(perc)
+            # print(perc)
 
 
     if geom.geom_type == 'MultiPolygon':
@@ -88,56 +88,59 @@ def process_geom(id, geom):
             # Extract the coordinates of the original polygon
             # print(geom)
     original_coordinates = geom.exterior.coords
-    print(original_coordinates)
+    # print(original_coordinates)
     item_collection = ItemCollection(items=new_items, )
+    try:
+        sentinel_stack = stackstac.stack(item_collection, assets=["B04", "B08", "SCL"],
+                                         bounds=geom.bounds,
+                                         gdal_env=stackstac.DEFAULT_GDAL_ENV.updated(
+                                             {'GDAL_HTTP_MAX_RETRY': 3,
+                                              'GDAL_HTTP_RETRY_DELAY': 5,
+                                              }),
+                                         epsg=4326, chunksize=(1, 1, 50, 50)).rename(
+            {'x': 'lon', 'y': 'lat'}).to_dataset(dim='band')
 
-    sentinel_stack = stackstac.stack(item_collection, assets=["B04", "B08", "SCL"],
-                                     bounds=geom.bounds,
-                                     gdal_env=stackstac.DEFAULT_GDAL_ENV.updated(
-                                         {'GDAL_HTTP_MAX_RETRY': 3,
-                                          'GDAL_HTTP_RETRY_DELAY': 5,
-                                          }),
-                                     epsg=4326, chunksize=(1, 1, 50, 50)).rename(
-        {'x': 'lon', 'y': 'lat'}).to_dataset(dim='band')
+        sentinel_stack['ndvi'] = (sentinel_stack['B08'] - sentinel_stack['B04'])/\
+                                (sentinel_stack['B08'] + sentinel_stack['B04'])
+        sentinel_stack = sentinel_stack[['ndvi', 'SCL','B04', 'B08']]
+        sentinel_stack = sentinel_stack.drop_vars([c for c in sentinel_stack.coords if not (c in ['time', 'lat', 'lon'])])
+        sentinel_table = sentinel_stack.to_dataframe()
 
-    sentinel_stack['ndvi'] = (sentinel_stack['B08'] - sentinel_stack['B04'])/\
-                            (sentinel_stack['B08'] + sentinel_stack['B04'])
-    sentinel_stack = sentinel_stack[['ndvi', 'SCL','B04', 'B08']]
-    sentinel_stack = sentinel_stack.drop_vars([c for c in sentinel_stack.coords if not (c in ['time', 'lat', 'lon'])])
-    sentinel_table = sentinel_stack.to_dataframe()
-
-    # filter by pixel classes
-    sentinel_table_filteB04 = sentinel_table[(sentinel_table['SCL'] == 4) |
-                                            (sentinel_table['SCL'] == 5) | (sentinel_table['SCL'] == 6) | (sentinel_table['SCL'] == 7)]
+        # filter by pixel classes
+        sentinel_table_filteB04 = sentinel_table[(sentinel_table['SCL'] == 4) |
+                                                (sentinel_table['SCL'] == 5) | (sentinel_table['SCL'] == 6) | (sentinel_table['SCL'] == 7)]
 
 
-    sentinel_table_filteB04 = sentinel_table_filteB04.reset_index()
-    print(sentinel_table_filteB04)
-    print()
-    # sentinel_table_filteB04.to_excel('test.xlsx')
+        sentinel_table_filteB04 = sentinel_table_filteB04.reset_index()
 
-    gdf = gpd.GeoDataFrame(
-        sentinel_table_filteB04,
-        geometry=gpd.points_from_xy(sentinel_table_filteB04['lon'],
-                                    sentinel_table_filteB04['lat']), crs="EPSG:4326"
-    )
+        # sentinel_table_filteB04.to_excel('test.xlsx')
 
-    gdf['ndvi_mean'] = sentinel_table_filteB04['ndvi'].mean()
-    gdf['ndvi_min'] = sentinel_table_filteB04['ndvi'].min()
-    gdf['ndvi_max'] = sentinel_table_filteB04['ndvi'].max()
-    gdf['building_id'] = id
-    gdf.to_postgis('ndvi_ver2', engine, if_exists='append')
+        gdf = gpd.GeoDataFrame(
+            sentinel_table_filteB04,
+            geometry=gpd.points_from_xy(sentinel_table_filteB04['lon'],
+                                        sentinel_table_filteB04['lat']), crs="EPSG:4326"
+        )
 
-    update_qry = text(
-        f"UPDATE public.nutz_building SET ndvi_calc = 'done' WHERE building_id = {id};")
+        gdf['ndvi_mean'] = sentinel_table_filteB04['ndvi'].mean()
+        gdf['ndvi_min'] = sentinel_table_filteB04['ndvi'].min()
+        gdf['ndvi_max'] = sentinel_table_filteB04['ndvi'].max()
+        gdf['building_id'] = id
+        gdf.to_postgis('ndvi_ver2', engine, if_exists='append')
 
-    with engine.begin() as conn:  # Ensures the connection is properly closed after operation
-        conn.execute(update_qry)
+        update_qry = text(
+            f"UPDATE public.nutz_building SET ndvi_calc = 'done' WHERE building_id = {id};")
+
+        with engine.begin() as conn:  # Ensures the connection is properly closed after operation
+            conn.execute(update_qry)
+    except Exception as e:
+        print(e)
+        print(id)
 
 def main():
     data = get_data()
+    print(len(data))
     # print(data)
-    with ThreadPoolExecutor(max_workers=20) as executor:
+    with ThreadPoolExecutor(max_workers=1) as executor:
         futures = [executor.submit(process_geom, id, geom) for id, geom in data.items()]
 
         for future in concurrent.futures.as_completed(futures):

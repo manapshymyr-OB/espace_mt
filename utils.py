@@ -55,7 +55,7 @@ def ndvi_chunk():
     for chunk in split_data:
         print(len(chunk))
         with open(f'ndvi_chunks/{index}.pickle', 'wb') as handle:
-            pickle.dump(data, handle)
+            pickle.dump(chunk, handle)
         index += 1
     # print(len(data))
     # while True:
@@ -79,7 +79,7 @@ def get_all_data():
 
     return gdf
 
-# ndvi_chunk()
+ndvi_chunk()
 # with open('ndvi_chunks/600000_650000.pickle', 'rb') as handle:
 #     b = pickle.load(handle)
 #

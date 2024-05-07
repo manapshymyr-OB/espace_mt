@@ -83,7 +83,7 @@ def process_geom(id, geom):
             perc = intersection_percent(item, geom)
             if perc >= 80:
                 new_items.append(item)
-                print(perc)
+                # print(perc)
 
 
         if geom.geom_type == 'MultiPolygon':
@@ -118,6 +118,9 @@ def process_geom(id, geom):
         # print(sentinel_table_filteB04)
         sentinel_table_filtered['building_id'] = id
         sentinel_table_filtered.to_pickle(f'buiilding_data/{id}')
+
+    else:
+        print('already downloaded')
     # print()
     # # sentinel_table_filteB04.to_excel('test.xlsx')
     #
@@ -141,7 +144,7 @@ def process_geom(id, geom):
 
 def main():
     with open('ndvi_chunks/1.pickle', 'rb') as handle:
-        data= pickle.load(handle)
+        data = pickle.load(handle)
 
     # print(data)
     with ThreadPoolExecutor() as executor:
