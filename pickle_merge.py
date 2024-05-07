@@ -9,7 +9,7 @@ with open(pickle_chunk, "rb") as f:
 ndvi = []
 for id in building_ids:
     try:
-        ndvi_pickle_file = os.path.join(data_dir, id)
+        ndvi_pickle_file = os.path.join(data_dir, str(id))
         with open(ndvi_pickle_file, 'rb') as f:
              ndvi_df = pickle.load(f)
 
