@@ -16,6 +16,7 @@ for id in building_ids:
 
         ndvi.append(ndvi_df)
         counter+=1
+        print(counter)
     except Exception as e:
         print(e)
     # print(id)
