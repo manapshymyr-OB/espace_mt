@@ -82,10 +82,10 @@ def process_geom(id, geom):
     """
     while True:
         try:
-            search = catalog.search(collections=["sentinel-1-rtc"], datetime="2023-04-01/2023-11-01",
+            search = catalog.search(collections=["sentinel-1-rtc"], datetime="2023-08-01/2023-09-01",
                                     query=["s1:resolution=high", 'sat:orbit_state=ascending'], intersects=geom)
             items = search.item_collection()
-            print(f'here - {geom}')
+            # print(f'here - {geom}')
             # print(items)
             break
         except Exception as e:
@@ -98,7 +98,7 @@ def process_geom(id, geom):
             # print(item.description)
             vh_uri = item.assets["vh"].href
             vv_uri = item.assets["vv"].href
-            print(vh_uri, vv_uri)
+            # print(vh_uri, vv_uri)
             vh = rioxarray.open_rasterio(vh_uri, masked=True)
             vv = rioxarray.open_rasterio(vv_uri, masked=True)
             target_crs = vh.rio.crs
@@ -123,20 +123,21 @@ def process_geom(id, geom):
 
             # Create a new Polygon object with the transformed coordinates
             transformed_polygon = Polygon(transformed_coordinates)
-            print(transformed_polygon)
+            # print(transformed_polygon)
             # print("Transformed Polygon:", transformed_polygon)
             # Display the reprojected bounding box
             vh_clip = vh.rio.clip_box(*transformed_polygon.bounds)
             vv_clip = vv.rio.clip_box(*transformed_polygon.bounds)
             mean_vh = np.mean(vh_clip.values)
             mean_vv = np.mean(vv_clip.values)
+            print(f'Building id {id} - {mean_vh} - {mean_vv} - {vh_uri}')
             print(mean_vh, mean_vv)
             if math.isnan(mean_vh):
                 mean_vh = 'null'
             if math.isnan(mean_vv):
                 mean_vv = 'null'
             update_qry = text(f"UPDATE public.nutz_building SET vh_asc_mean = {mean_vh}, vv_asc_mean = {mean_vv} WHERE building_id = {id};")
-
+# 5424566
             with engine.begin() as conn:  # Ensures the connection is properly closed after operation
                 conn.execute(update_qry)
         except Exception as e:

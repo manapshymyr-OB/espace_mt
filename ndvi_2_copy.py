@@ -117,7 +117,7 @@ def process_geom(id, geom):
         sentinel_table_filtered = sentinel_table_filtered.reset_index()
         # print(sentinel_table_filteB04)
         sentinel_table_filtered['building_id'] = id
-        sentinel_table_filtered.to_pickle(f'buiilding_data/{id}')
+        sentinel_table_filtered.to_pickle(f'buiilding_data/{id}_500')
 
     else:
         print('already downloaded')

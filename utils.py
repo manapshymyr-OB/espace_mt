@@ -21,7 +21,7 @@ def read_shp(shp_filename):
 
 def get_data():
     get_building_geom = """SELECT building_geom as geom, building_id
-    FROM public.nutz_building_2 where ndvi_mean is null ;"""
+    FROM public.nutz_building where vh_desc_mean is null ;"""
 
     gdf = gpd.read_postgis(get_building_geom, engine)
     # gdf.to_file('buildings.geojson', driver="GeoJSON")
@@ -31,8 +31,8 @@ def get_data():
     return object_data
 
 def get_data_ndvi_chunk(start, end):
-    get_building_geom = f"""SELECT st_transform(st_buffer(st_transform(building_geom, 3857), 100), 4326) as geom, building_id
-    FROM public.nutz_building where building_id > {start} order by building_id;"""
+    get_building_geom = f"""SELECT st_transform(st_buffer(building_geom_local, 500), 4326) as geom, building_id
+    FROM public.nutz_building"""
 
     gdf = gpd.read_postgis(get_building_geom, engine)
     # gdf.to_file('buildings.geojson', driver="GeoJSON")
@@ -45,6 +45,7 @@ def chunk_dict(d, size):
     items = list(d.items())
     chunks = [items[i:i+size] for i in range(0, len(items), size)]
     return [dict(chunk) for chunk in chunks]
+
 def ndvi_chunk():
     starting = 50000
     ending = 100000
@@ -54,7 +55,7 @@ def ndvi_chunk():
     index = 0
     for chunk in split_data:
         print(len(chunk))
-        with open(f'ndvi_chunks/{index}.pickle', 'wb') as handle:
+        with open(f'ndvi_chunks/{index}_500.pickle', 'wb') as handle:
             pickle.dump(chunk, handle)
         index += 1
     # print(len(data))
@@ -79,7 +80,7 @@ def get_all_data():
 
     return gdf
 
-ndvi_chunk()
+# ndvi_chunk()
 # with open('ndvi_chunks/600000_650000.pickle', 'rb') as handle:
 #     b = pickle.load(handle)
 #

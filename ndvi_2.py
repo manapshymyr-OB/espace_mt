@@ -11,7 +11,9 @@ import planetary_computer
 from concurrent.futures import ThreadPoolExecutor
 import concurrent
 
-
+import pickle
+import pandas as pd
+import os
 
 planetary_computer.settings.set_subscription_key('b6d101342e1749f794a03ee36e065971')
 catalog = pystac_client.Client.open("https://planetarycomputer.microsoft.com/api/stac/v1",
@@ -148,5 +150,22 @@ def main():
             print(f"Processed building ID {id} with coverage {coverage}%")
 
 
-if __name__ == "__main__":
-    main()
+def concat_pickles(folder):
+    dfs = []
+    for filename in os.listdir(folder):
+        if 'ndvi_' in filename:
+            print(filename)
+            pickle_filename = os.path.join(folder, filename)
+            with open(pickle_filename, 'rb') as handle:
+                b = pickle.load(handle)
+                dfs.append(b)
+
+    df = pd.concat(dfs)
+    print(df.shape)
+    print(df.columns)
+    df = df.drop_duplicates(subset=['building_ids'])
+    print(df.shape)
+    df.columns = ['building_id', 'ndvi_mean', 'ndvi_min', 'ndvi_max']
+    df.to_sql('ndvi_temp', engine, if_exists='append', index=False)
+
+concat_pickles(r'D:\New folder\MT\espace_mt\ndvi_chunks')

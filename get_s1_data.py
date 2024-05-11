@@ -7,6 +7,7 @@ import rioxarray
 from pystac.item import Item
 from shapely.geometry import shape, Polygon
 from sqlalchemy import create_engine, text
+import numpy as np
 
 from utils import get_data
 
