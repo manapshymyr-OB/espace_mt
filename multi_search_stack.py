@@ -81,7 +81,7 @@ def process_geom(id, geom):
     This function is intended to be executed in a thread pool.
     """
     try:
-        search = catalog.search(collections=["sentinel-1-rtc"], datetime="2023-03-01/2023-10-01",
+        search = catalog.search(collections=["sentinel-1-rtc"], datetime="2021-03-01/2021-10-01",
                                 query=["s1:resolution=high", 'sat:orbit_state=descending'], intersects=geom)
         items = search.item_collection()
         print(len(items))
@@ -190,8 +190,9 @@ def process_geom(id, geom):
 
 def main():
     data = get_data()
+    print(data)
     # print(data)
-    with ThreadPoolExecutor() as executor:
+    with ThreadPoolExecutor(max_workers=1) as executor:
         futures = [executor.submit(process_geom, id, geom) for id, geom in data.items()]
 
         for future in concurrent.futures.as_completed(futures):

@@ -12,6 +12,7 @@ import planetary_computer
 from concurrent.futures import ThreadPoolExecutor
 import concurrent
 import pickle
+import pandas as pd
 
 
 
@@ -117,7 +118,19 @@ def process_geom(id, geom):
         sentinel_table_filtered = sentinel_table_filtered.reset_index()
         # print(sentinel_table_filteB04)
         sentinel_table_filtered['building_id'] = id
-        sentinel_table_filtered.to_pickle(f'buiilding_data/{id}_500')
+        # sentinel_table_filtered.to_pickle(f'buiilding_data/{id}_500')
+
+        ndvi_dict = {
+            'building_id':[id],
+            'ndvi_mean': [sentinel_table_filtered['ndvi'].mean()],
+            'ndvi_max': [sentinel_table_filtered['ndvi'].max()],
+            'ndvi_min': [sentinel_table_filtered['ndvi'].min()],
+
+
+        }
+        df1 = pd.DataFrame(ndvi_dict)
+        df1.to_pickle(f'buiilding_data/{id}_500')
+        print(df1)
 
     else:
         print('already downloaded')
