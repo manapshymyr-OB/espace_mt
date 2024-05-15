@@ -27,6 +27,7 @@ download_data_ = os.listdir('buiilding_data')
 
 download_data = []
 for downloaded in download_data_:
+    print(f"{downloaded} - {downloaded.split('_')[0]}")
     download_data.append(downloaded.split('_')[0])
 
 def get_largest_polygon(multipolygon):
