@@ -23,7 +23,12 @@ catalog = pystac_client.Client.open("https://planetarycomputer.microsoft.com/api
                                     modifier=planetary_computer.sign_inplace)
 
 
-download_data = os.listdir('buiilding_data')
+download_data_ = os.listdir('buiilding_data')
+
+download_data = []
+for downloaded in download_data_:
+    download_data.append(downloaded.split('_')[0])
+
 def get_largest_polygon(multipolygon):
     # Initialize variables to keep track of the largest polygon and its area
     largest_polygon = None
