@@ -167,13 +167,13 @@ def process_geom(id, geom):
 
 def main():
     data = get_data()
-    # print(data)
-    # with ThreadPoolExecutor(max_workers=20) as executor:
-    #     futures = [executor.submit(process_geom, id, geom) for id, geom in data.items()]
-    #
-    #     for future in concurrent.futures.as_completed(futures):
-    #         id, coverage = future.result()
-    #         print(f"Processed building ID {id} with coverage {coverage}%")
+    print(data)
+    with ThreadPoolExecutor(max_workers=20) as executor:
+        futures = [executor.submit(process_geom, id, geom) for id, geom in data.items()]
+
+        for future in concurrent.futures.as_completed(futures):
+            id, coverage = future.result()
+            print(f"Processed building ID {id} with coverage {coverage}%")
 
 
 

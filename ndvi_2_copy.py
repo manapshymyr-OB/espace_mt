@@ -1,5 +1,7 @@
 import os
 import sys
+import time
+
 sys.path.append('.')
 import pystac_client
 import stackstac # !!! as of June 5, 2023, stackstac is not compatible with numpy > 1.23.5 !!!
@@ -40,7 +42,7 @@ def get_largest_polygon(multipolygon):
 
     return largest_polygon
 
-
+counter = None
 # engine = create_engine(f'postgresql://postgres:postgres@localhost:5432/postgres')
 
 def get_data():
@@ -71,7 +73,7 @@ def intersection_percent(item: Item, aoi: Dict[str, Any]) -> float:
 # data = get_data()
 
 def process_geom(id, geom):
-
+    global counter
     if str(id) not in download_data:
         items = catalog.search(
                intersects=geom,
@@ -95,6 +97,7 @@ def process_geom(id, geom):
         original_coordinates = geom.exterior.coords
         item_collection = ItemCollection(items=new_items, )
 
+        start = time.time()
         sentinel_stack = stackstac.stack(item_collection, assets=["B04", "B08", "SCL"],
                                          bounds=geom.bounds,
                                          gdal_env=stackstac.DEFAULT_GDAL_ENV.updated(
@@ -114,7 +117,7 @@ def process_geom(id, geom):
         sentinel_table_filtered = sentinel_table[(sentinel_table['SCL'] == 4) |
                                                 (sentinel_table['SCL'] == 5) | (sentinel_table['SCL'] == 6) | (sentinel_table['SCL'] == 7)]
 
-
+        print(f"Calculated in {time.time() - start} - id - {id}")
         sentinel_table_filtered = sentinel_table_filtered.reset_index()
         # print(sentinel_table_filteB04)
         sentinel_table_filtered['building_id'] = id
@@ -129,11 +132,19 @@ def process_geom(id, geom):
 
         }
         df1 = pd.DataFrame(ndvi_dict)
-        df1.to_pickle(f'buiilding_data/{id}_500')
-        print(df1)
+
+        with open(f'buiilding_data/{id}', 'wb') as handle:
+            pickle.dump(df1, handle)
+
+        counter += 1
+
+        print(f"""{counter} - {len(os.listdir('buiilding_data'))} of {id}""")
+        # df1.to_pickle(f'buiilding_data/{id}_500')
+        # print(df1)
 
     else:
-        print('already downloaded')
+        counter += 1
+        print(f'already downloaded {counter}')
     # print()
     # # sentinel_table_filteB04.to_excel('test.xlsx')
     #

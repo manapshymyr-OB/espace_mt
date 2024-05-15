@@ -42,7 +42,7 @@ engine = create_engine(f'postgresql://postgres:postgres@localhost:5432/postgres'
 
 def get_data():
     get_building_geom = """SELECT st_transform(st_buffer(st_transform(building_geom, 3857), 100), 4326) as geom, building_id
-    FROM public.nutz_building where building_id <= 50000 and ndvi_calc is null order by building_id"""
+    FROM public.nutz_building where  ndvi_calc is null order by building_id"""
 
     gdf = gpd.read_postgis(get_building_geom, engine)
     # gdf.to_file('buildings.geojson', driver="GeoJSON")
@@ -65,7 +65,7 @@ def intersection_percent(item: Item, aoi: Dict[str, Any]) -> float:
 
     return intersection_percent
 
-data = get_data()
+# data = get_data()
 
 def process_geom(id, geom):
 
@@ -149,23 +149,24 @@ def main():
             id, coverage = future.result()
             print(f"Processed building ID {id} with coverage {coverage}%")
 
-
-def concat_pickles(folder):
-    dfs = []
-    for filename in os.listdir(folder):
-        if 'ndvi_' in filename:
-            print(filename)
-            pickle_filename = os.path.join(folder, filename)
-            with open(pickle_filename, 'rb') as handle:
-                b = pickle.load(handle)
-                dfs.append(b)
-
-    df = pd.concat(dfs)
-    print(df.shape)
-    print(df.columns)
-    df = df.drop_duplicates(subset=['building_ids'])
-    print(df.shape)
-    df.columns = ['building_id', 'ndvi_mean', 'ndvi_min', 'ndvi_max']
-    df.to_sql('ndvi_temp', engine, if_exists='append', index=False)
-
-concat_pickles(r'D:\New folder\MT\espace_mt\ndvi_chunks')
+if __name__ == '__main__':
+    main()
+# def concat_pickles(folder):
+#     dfs = []
+#     for filename in os.listdir(folder):
+#         if 'ndvi_' in filename:
+#             print(filename)
+#             pickle_filename = os.path.join(folder, filename)
+#             with open(pickle_filename, 'rb') as handle:
+#                 b = pickle.load(handle)
+#                 dfs.append(b)
+#
+#     df = pd.concat(dfs)
+#     print(df.shape)
+#     print(df.columns)
+#     df = df.drop_duplicates(subset=['building_ids'])
+#     print(df.shape)
+#     df.columns = ['building_id', 'ndvi_mean', 'ndvi_min', 'ndvi_max']
+#     df.to_sql('ndvi_temp', engine, if_exists='append', index=False)
+#
+# concat_pickles(r'D:\New folder\MT\espace_mt\ndvi_chunks')
