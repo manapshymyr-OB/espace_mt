@@ -42,7 +42,7 @@ def get_largest_polygon(multipolygon):
 
     return largest_polygon
 
-counter = None
+counter = 0
 # engine = create_engine(f'postgresql://postgres:postgres@localhost:5432/postgres')
 
 def get_data():
