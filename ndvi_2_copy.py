@@ -133,12 +133,15 @@ def process_geom(id, geom):
         }
         df1 = pd.DataFrame(ndvi_dict)
 
-        with open(f'buiilding_data/{id}', 'wb') as handle:
-            pickle.dump(df1, handle)
+        try:
+            with open(f'buiilding_data/{id}', 'wb') as handle:
+                pickle.dump(df1, handle)
 
-        counter += 1
+            counter += 1
 
-        print(f"""{counter} - {len(os.listdir('buiilding_data'))} of {id}""")
+            print(f"""{counter} - {len(os.listdir('buiilding_data'))} of {id}""")
+        except Exception as e:
+            print(e)
         # df1.to_pickle(f'buiilding_data/{id}_500')
         # print(df1)
 
