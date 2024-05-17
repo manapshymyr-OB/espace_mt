@@ -123,14 +123,16 @@ def process_geom(id, geom):
                                         sentinel_table_filteB04['lat']), crs="EPSG:4326"
         )
 
-        gdf['ndvi_mean'] = sentinel_table_filteB04['ndvi'].mean()
-        gdf['ndvi_min'] = sentinel_table_filteB04['ndvi'].min()
-        gdf['ndvi_max'] = sentinel_table_filteB04['ndvi'].max()
-        gdf['building_id'] = id
-        gdf.to_postgis('ndvi_ver2', engine, if_exists='append')
-
+        # gdf['ndvi_mean'] =
+        # gdf['ndvi_min'] =
+        # gdf['ndvi_max'] =
+        # gdf['building_id'] = id
+        # gdf.to_postgis('ndvi_ver2', engine, if_exists='append')
         update_qry = text(
-            f"UPDATE public.nutz_building SET ndvi_calc = 'done' WHERE building_id = {id};")
+            f"UPDATE public.nutz_building SET ndvi_mean = {sentinel_table_filteB04['ndvi'].mean()}, ndvi_max = {sentinel_table_filteB04['ndvi'].max()}, ndvi_min = {sentinel_table_filteB04['ndvi'].min()},  ndvi_calc = 'done' WHERE building_id = {id};")
+
+        # update_qry = text(
+        #     f"UPDATE public.nutz_building SET ndvi_calc = 'done' WHERE building_id = {id};")
 
         with engine.begin() as conn:  # Ensures the connection is properly closed after operation
             conn.execute(update_qry)

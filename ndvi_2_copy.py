@@ -81,11 +81,14 @@ def intersection_percent(item: Item, aoi: Dict[str, Any]) -> float:
 def process_geom(id, geom):
     global counter
     if str(id) not in download_data:
-        items = catalog.search(
+
+        try:
+            items = catalog.search(
                intersects=geom,
                collections=["sentinel-2-l2a"],
                 datetime="2023-06-01/2023-09-01").item_collection()
-
+        except Exception as e:
+            print(e)
 
         new_items = []
         for item in items:
