@@ -2,7 +2,7 @@
 # author: Hao Li, leebobgiser316@gmail.com
 # data: 05.10.2023
 # -------------------------------
-
+import time
 
 from sklearn.model_selection import train_test_split
 from tensorflow.keras.models import Sequential
@@ -12,6 +12,14 @@ from sklearn.preprocessing import StandardScaler, MinMaxScaler
 import geopandas as gpd
 import numpy as np
 from tensorflow.keras.optimizers import Nadam
+from sqlalchemy import create_engine
+import pandas as pd
+
+engine = create_engine('postgresql://postgres:postgres@localhost:5432/postgres')
+
+
+
+
 
 
 ###########  Hyperparameters #############
@@ -44,16 +52,32 @@ def lr_schedule(epoch):
 
 
 ###########  Data Import #############
-# input the feature and height information for all buildings in Heidelberg
-attribute = r"./data/korea_buildings_with_feature.geojson"
+# # input the feature and height information for all buildings in Heidelberg
+# attribute = r"./data/korea_buildings_with_feature.geojson"
+#
+# # read and shuffle all data into geopandas dataframe
+# df = gpd.read_file(attribute)
+# # df = shuffle(df)
+# nutz_division_id,
+buiilding_data_sql = """SELECT 
+building_id, 
+category_id,
+vv_desc_mean, vh_desc_mean, vv_asc_mean, vh_asc_mean, 
+building_area, building_height_wfs, ndvi_mean, ndvi_min, ndvi_max, 
+ parking_large_count, parking_small_count, parking_medium_count,
+  parking_large_closest_distance, parking_small_closest_distance, 
+  parking_medium_closest_distance, motorway_closest_distance,
+   primary_closest_distance, secondary_closest_distance, teritary_closest_distance,
+    trunk_closest_distance, perimeter, circularcompactness, longestaxislength, elongation, 
+    convexity, orientation, corners, sharedwall, airport_closest_distance, 
+      railway_closest_distance
+FROM public.nutz_building;"""
 
-# read and shuffle all data into geopandas dataframe
-df = gpd.read_file(attribute)
-# df = shuffle(df)
-
+df = pd.read_sql(buiilding_data_sql, engine)
+print(df)
 # get features and labels
-features = df.iloc[:, 3:10]
-warehouse_label = df.iloc[:, 10]
+features = df.iloc[:, 2:]
+category_label = df.iloc[:, 1]
 
 # Saving feature names for later use
 feature_list = list(features.columns)
@@ -62,7 +86,7 @@ print()
 
 # convert features to array
 # Split the data into training and testing sets
-X_train, X_test, y_train, y_test = train_test_split(features, warehouse_label, test_size=0.5, random_state=42)
+X_train, X_test, y_train, y_test = train_test_split(features, category_label, test_size=0.5, random_state=42)
 
 print('Training Features Shape:', X_train.shape)
 print('Training Labels Shape:', y_train.shape)
@@ -79,14 +103,15 @@ X_test_norm = sc.transform(X_test)
 
 # # Instantiate model with 1000 decision trees
 n_dimension = X_train.shape[1]
-opt = Nadam(lr=lr_schedule(0), beta_1=0.9, beta_2=0.999)
+print(f'here - {lr_schedule(0)}')
+opt = Nadam(learning_rate=lr_schedule(0), beta_1=0.9, beta_2=0.999)
 # create model
 model = Sequential()
 model.add(Dense(20, input_shape=(n_dimension,), kernel_initializer='normal', activation='relu'))
 model.add(Dense(20, kernel_initializer='normal', activation='relu'))
 model.add(Dense(1, kernel_initializer='normal'))
 # Compile model
-model.compile(loss='binary_crossentropy', optimizer=opt)
+model.compile(loss='categorical_crossentropy', optimizer=opt)
 
 model.summary()
 
@@ -101,8 +126,11 @@ print("model is ready!")
 
 #################  Evaluation ###########################
 # Use the forest's predict method on the test data
-y_pred = model.predict_classes(X_test_norm, verbose=0)
-y_pred = np.transpose(y_pred)[0]
+# y_pred = model.predict_classes(X_test_norm, verbose=0)
+y_pred = np.argmax(model.predict(X_test_norm),axis=1)
+print(y_pred)
+# y_pred = np.transpose(y_pred)[0]
+# print(y_pred)
 
 # print(y_pred)
 # assert 0
@@ -111,8 +139,8 @@ y_pred = np.transpose(y_pred)[0]
 
 # Create the confusion matrix
 accuracy = accuracy_score(y_test, y_pred)
-precision = precision_score(y_test, y_pred)
-recall = recall_score(y_test, y_pred)
+precision = precision_score(y_test, y_pred, average='weighted')
+recall = recall_score(y_test, y_pred, average='weighted')
 print("Accuracy:", accuracy)
 print("Precision:", precision)
 print("Recall:", recall)

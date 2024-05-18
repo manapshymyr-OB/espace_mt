@@ -8,19 +8,32 @@ from sklearn.model_selection import train_test_split
 from sklearn.metrics import accuracy_score, precision_score, recall_score, confusion_matrix, classification_report
 from sklearn.preprocessing import StandardScaler, MinMaxScaler
 import geopandas as gpd
+from sqlalchemy import create_engine
+import pandas as pd
 
+engine = create_engine('postgresql://postgres:postgres@localhost:5432/postgres')
 
 ###########  Data Import #############
 # input the feature and height information for all buildings in Heidelberg
-attribute = "./data/korea_buildings_with_feature.geojson"
+buiilding_data_sql = """SELECT 
+building_id, 
+category_id,
+vv_desc_mean, vh_desc_mean, vv_asc_mean, vh_asc_mean, 
+building_area, building_height_wfs, ndvi_mean, ndvi_min, ndvi_max, 
+ parking_large_count, parking_small_count, parking_medium_count,
+  parking_large_closest_distance, parking_small_closest_distance, 
+  parking_medium_closest_distance, motorway_closest_distance,
+   primary_closest_distance, secondary_closest_distance, teritary_closest_distance,
+    trunk_closest_distance, perimeter, circularcompactness, longestaxislength, elongation, 
+    convexity, orientation, corners, sharedwall, airport_closest_distance, 
+      railway_closest_distance
+FROM public.nutz_building;"""
 
-# read and shuffle all data into geopandas dataframe
-df = gpd.read_file(attribute)
-# df = shuffle(df)
-
+df = pd.read_sql(buiilding_data_sql, engine)
+print(df)
 # get features and labels
-features = df.iloc[:, 3:10]
-warehouse_label = df.iloc[:, 10]
+features = df.iloc[:, 2:]
+category_label = df.iloc[:, 1]
 
 # Saving feature names for later use
 feature_list = list(features.columns)
@@ -29,7 +42,7 @@ print()
 
 # convert features to array
 # Split the data into training and testing sets
-X_train, X_test, y_train, y_test = train_test_split(features, warehouse_label, test_size=0.5, random_state=42)
+X_train, X_test, y_train, y_test = train_test_split(features, category_label, test_size=0.5, random_state=42)
 
 print('Training Features Shape:', X_train.shape)
 print('Training Labels Shape:', y_train.shape)
