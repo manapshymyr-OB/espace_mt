@@ -33,6 +33,8 @@ for id in building_ids:
         ndvi_min_lst.append(ndvi_df['ndvi_min'].min())
         ndvi_max_lst.append(ndvi_df['ndvi_max'].max())
         b_ids.append(id)
+        counter += 1
+        print(counter)
 
     except Exception as e:
         print(e)
