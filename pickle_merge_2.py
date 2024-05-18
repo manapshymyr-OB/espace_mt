@@ -14,11 +14,12 @@ ndvi_min_lst = []
 ndvi_max_lst = []
 b_ids = []
 for id in building_ids:
+
     try:
         ndvi_pickle_file = os.path.join(data_dir, str(id))
         with open(ndvi_pickle_file, 'rb') as f:
              ndvi_df = pickle.load(f)
-
+        id = id.split('_')[0]
         # ndvi.append(ndvi_df)
         # print(ndvi_df)
         ndvi_mean_lst.append(ndvi_df['ndvi'].mean())

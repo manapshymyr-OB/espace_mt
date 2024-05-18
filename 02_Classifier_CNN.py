@@ -6,6 +6,7 @@ import time
 
 from sklearn.model_selection import train_test_split
 from tensorflow.keras.models import Sequential
+from keras.layers import Input
 from tensorflow.keras.layers import Dense
 from sklearn.metrics import accuracy_score, precision_score, recall_score, confusion_matrix, classification_report
 from sklearn.preprocessing import StandardScaler, MinMaxScaler
@@ -78,15 +79,15 @@ print(df)
 # get features and labels
 features = df.iloc[:, 2:]
 category_label = df.iloc[:, 1]
-
+category_labels = df['category_id'].unique().tolist()
+print(len(category_label))
 # Saving feature names for later use
 feature_list = list(features.columns)
 
-print()
 
 # convert features to array
 # Split the data into training and testing sets
-X_train, X_test, y_train, y_test = train_test_split(features, category_label, test_size=0.5, random_state=42)
+X_train, X_test, y_train, y_test = train_test_split(features, category_label, train_size=0.5, test_size=0.5, random_state=42)
 
 print('Training Features Shape:', X_train.shape)
 print('Training Labels Shape:', y_train.shape)
@@ -103,13 +104,16 @@ X_test_norm = sc.transform(X_test)
 
 # # Instantiate model with 1000 decision trees
 n_dimension = X_train.shape[1]
+
+print(X_train.shape)
+print(n_dimension)
 print(f'here - {lr_schedule(0)}')
 opt = Nadam(learning_rate=lr_schedule(0), beta_1=0.9, beta_2=0.999)
 # create model
 model = Sequential()
-model.add(Dense(20, input_shape=(n_dimension,), kernel_initializer='normal', activation='relu'))
+model.add(Dense( Input(shape=(n_dimension,)), kernel_initializer='normal', activation='relu'))
 model.add(Dense(20, kernel_initializer='normal', activation='relu'))
-model.add(Dense(1, kernel_initializer='normal'))
+model.add(Dense(4, kernel_initializer='normal'))
 # Compile model
 model.compile(loss='categorical_crossentropy', optimizer=opt)
 
