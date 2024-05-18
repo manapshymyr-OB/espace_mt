@@ -28,6 +28,12 @@ for id in building_ids:
 
         counter+=1
         print(counter)
+    except KeyError as e:
+        ndvi_mean_lst.append(ndvi_df['ndvi_mean'].mean())
+        ndvi_min_lst.append(ndvi_df['ndvi_min'].min())
+        ndvi_max_lst.append(ndvi_df['ndvi_max'].max())
+        b_ids.append(id)
+
     except Exception as e:
         print(e)
     # print(id)
@@ -35,7 +41,7 @@ for id in building_ids:
 
 data = {
 
-    'building_ids': b_ids,
+    'building_ids_new': b_ids,
     'ndvi_mean': ndvi_mean_lst,
     'ndvi_min': ndvi_min_lst,
     'ndvi_max': ndvi_max_lst
