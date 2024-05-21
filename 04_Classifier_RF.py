@@ -5,11 +5,12 @@
 
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.model_selection import train_test_split
-from sklearn.metrics import accuracy_score, precision_score, recall_score, confusion_matrix, classification_report
+from sklearn.metrics import accuracy_score, precision_score, recall_score, confusion_matrix, classification_report, balanced_accuracy_score
 from sklearn.preprocessing import StandardScaler, MinMaxScaler
 import geopandas as gpd
 from sqlalchemy import create_engine
 import pandas as pd
+import shap
 
 engine = create_engine('postgresql://postgres:postgres@localhost:5432/postgres')
 
@@ -38,11 +39,11 @@ category_label = df.iloc[:, 1]
 # Saving feature names for later use
 feature_list = list(features.columns)
 
-print()
 
 # convert features to array
 # Split the data into training and testing sets
-X_train, X_test, y_train, y_test = train_test_split(features, category_label, test_size=0.5, random_state=42)
+X_train, X_test, y_train, y_test = train_test_split(features, category_label,
+                                                    test_size=0.3, random_state=42, stratify=category_label)
 
 print('Training Features Shape:', X_train.shape)
 print('Training Labels Shape:', y_train.shape)
@@ -57,7 +58,7 @@ X_test_norm = sc.transform(X_test)
 
 #################  RF Model ###########################
 # Instantiate model with 1000 decision trees
-rf = RandomForestClassifier(n_estimators=1000, random_state=42, verbose=1, n_jobs=6, min_samples_split=5)
+rf = RandomForestClassifier(n_estimators=1000, random_state=42, verbose=1, n_jobs=20, min_samples_split=5)
 rf.fit(X_train_norm, y_train)
 print("model is ready!")
 
@@ -69,9 +70,9 @@ y_pred = rf.predict(X_test_norm)
 
 
 # Create the confusion matrix
-accuracy = accuracy_score(y_test, y_pred)
-precision = precision_score(y_test, y_pred)
-recall = recall_score(y_test, y_pred)
+accuracy = balanced_accuracy_score(y_test, y_pred)
+precision = precision_score(y_test, y_pred, average='weighted')
+recall = recall_score(y_test, y_pred, average='weighted')
 print("Accuracy:", accuracy)
 print("Precision:", precision)
 print("Recall:", recall)
@@ -89,7 +90,7 @@ feature_importances = [(feature, round(importance, 2)) for feature, importance i
 feature_importances = sorted(feature_importances, key=lambda x: x[1], reverse=True)
 # Print out the feature and importances
 print('Print Top10 important features:')
-[print('Variable: {:5} Importance: {}'.format(*pair)) for pair in feature_importances[0:10]]
+[print('Variable: {:5} Importance: {}'.format(*pair)) for pair in feature_importances]
 
 
 # Calculate the SHAP feature importance
@@ -100,6 +101,7 @@ X_importance = X_test_norm
 # Explain model predictions using shap library:
 explainer = shap.TreeExplainer(rf)
 shap_values = explainer.shap_values(X_importance)
+
 print(shap_values)
 #
 # # Plot summary_plot
