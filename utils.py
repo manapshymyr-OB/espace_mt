@@ -2,9 +2,7 @@ import geopandas as gpd
 from sqlalchemy import create_engine
 import pickle
 
-
-
-
+# example connection
 engine = create_engine(f'postgresql://postgres:postgres@localhost:5432/postgres')
 
 def read_shp(shp_filename):
@@ -21,22 +19,20 @@ def read_shp(shp_filename):
 
 def get_data():
     get_building_geom = """SELECT building_geom as geom, building_id
-    FROM public.nutz_building where ndvi_calc is null ;"""
+    FROM public.nutz_building where building_id = 10061726;"""
 
     gdf = gpd.read_postgis(get_building_geom, engine)
-    # gdf.to_file('buildings.geojson', driver="GeoJSON")
-    # dict
+
     object_data = dict(zip(gdf["building_id"], gdf['geom']))
 
     return object_data
 
 def get_data_ndvi_chunk(start, end):
     get_building_geom = f"""SELECT st_transform(st_buffer(building_geom_local, 500), 4326) as geom, building_id
-    FROM public.nutz_building"""
+    FROM public.nutz_building where nutz_building.ndvi_calc ='' """
 
     gdf = gpd.read_postgis(get_building_geom, engine)
-    # gdf.to_file('buildings.geojson', driver="GeoJSON")
-    # dict
+
     object_data = dict(zip(gdf["building_id"], gdf['geom']))
 
     return object_data
@@ -54,35 +50,15 @@ def ndvi_chunk():
     split_data = chunk_dict(data, starting)
     index = 0
     for chunk in split_data:
-        print(len(chunk))
-        with open(f'ndvi_chunks/{index}_500.pickle', 'wb') as handle:
+        with open(f'ndvi_chunks/{index}_500_1.pickle', 'wb') as handle:
             pickle.dump(chunk, handle)
         index += 1
-    # print(len(data))
-    # while True:
-    #     if ending < 650000:
-    #         starting += 50000
-    #         ending += 50000
-    #
-    #
-    #
-    #     else:
-    #         break
+
 
 def get_all_data():
     get_building_geom = """SELECT building_centroid as geom, building_id
     FROM public.nutz_building ;"""
 
     gdf = gpd.read_postgis(get_building_geom, engine)
-    # gdf.to_file('buildings.geojson', driver="GeoJSON")
-    # dict
-    # object_data = dict(zip(gdf["building_id"], gdf['geom']))
 
     return gdf
-
-# ndvi_chunk()
-# with open('ndvi_chunks/600000_650000.pickle', 'rb') as handle:
-#     b = pickle.load(handle)
-#
-# print(b)
-

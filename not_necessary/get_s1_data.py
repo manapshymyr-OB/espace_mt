@@ -1,3 +1,4 @@
+import time
 from typing import Dict, Any
 
 import planetary_computer
@@ -85,6 +86,8 @@ conn = engine.connect()
 conn.execution_options(isolation_level="AUTOCOMMIT")
 
 for id, geom in data.items():
+    print(type(geom))
+    time.sleep()
     while True:
         search = catalog.search(
             collections=["sentinel-1-rtc"],

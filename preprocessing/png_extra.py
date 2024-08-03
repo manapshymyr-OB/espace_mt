@@ -1,12 +1,13 @@
-import psycopg2
 import base64
-from sqlalchemy import create_engine, text
-import pandas as pd
-from concurrent.futures import ProcessPoolExecutor
 import os
+from concurrent.futures import ProcessPoolExecutor
+
+import pandas as pd
+from sqlalchemy import text
+
+from utils import engine
 
 # Initialize database connection
-engine = create_engine(f'postgresql://postgres:postgres@localhost:5432/postgres')
 connection = engine.connect()
 
 

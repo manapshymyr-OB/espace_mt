@@ -1,9 +1,13 @@
-import psycopg2
+"""
+Export png images based building geometry from raster data. Used to clip buildings for roof type
+"""
 import base64
-from sqlalchemy import create_engine, text
-import geopandas as gpd
+
 import pandas as pd
-engine = create_engine(f'postgresql://postgres:postgres@localhost:5432/postgres')
+from sqlalchemy import text
+
+from utils import engine
+
 connection = engine.connect()
 connection.execution_options(isolation_level="AUTOCOMMIT")
 sql_intersections_all = """select 

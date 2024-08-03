@@ -1,8 +1,15 @@
+"""
+Downloads NDVI based on the buffered building geometry
+The dataset chunked into smaller chunks to speed up the download.
+Chunks can be created using the ndvi_chunk function in utils.py
+The result save into building folder
+"""
+
 import os
 import sys
 import time
 
-sys.path.append('.')
+sys.path.append('..')
 import pystac_client
 import stackstac # !!! as of June 5, 2023, stackstac is not compatible with numpy > 1.23.5 !!!
 import geopandas as gpd
@@ -17,13 +24,14 @@ import pickle
 import pandas as pd
 
 
-
-planetary_computer.settings.set_subscription_key('b6d101342e1749f794a03ee36e065971')
+# Set up planetary computer subscription key and STAC catalog
+planetary_computer_api_key = '<KEY>'
+planetary_computer.settings.set_subscription_key(planetary_computer_api_key)
 catalog = pystac_client.Client.open("https://planetarycomputer.microsoft.com/api/stac/v1",
                                     modifier=planetary_computer.sign_inplace)
 
 
-download_data_ = os.listdir('buiilding_data')
+download_data_ = os.listdir('../buiilding_data')
 
 download_data = []
 for downloaded in download_data_:
@@ -148,7 +156,7 @@ def process_geom(id, geom):
 
             counter += 1
 
-            print(f"""{counter} - {len(os.listdir('buiilding_data'))} of {id}""")
+            print(f"""{counter} - {len(os.listdir('../buiilding_data'))} of {id}""")
         except Exception as e:
             print(e)
         # df1.to_pickle(f'buiilding_data/{id}_500')
@@ -157,29 +165,9 @@ def process_geom(id, geom):
     else:
         counter += 1
         print(f'already downloaded {counter}')
-    # print()
-    # # sentinel_table_filteB04.to_excel('test.xlsx')
-    #
-    # gdf = gpd.GeoDataFrame(
-    #     sentinel_table_filteB04,
-    #     geometry=gpd.points_from_xy(sentinel_table_filteB04['lon'],
-    #                                 sentinel_table_filteB04['lat']), crs="EPSG:4326"
-    # )
-    #
-    # gdf['ndvi_mean'] = sentinel_table_filteB04['ndvi'].mean()
-    # gdf['ndvi_min'] = sentinel_table_filteB04['ndvi'].min()
-    # gdf['ndvi_max'] = sentinel_table_filteB04['ndvi'].max()
-    # gdf['building_id'] = id
-    # gdf.to_postgis('ndvi_ver2', engine, if_exists='append')
-
-    # update_qry = text(
-    #     f"UPDATE public.nutz_building SET ndvi_calc = 'done' WHERE building_id = {id};")
-    #
-    # with engine.begin() as conn:  # Ensures the connection is properly closed after operation
-    #     conn.execute(update_qry)
 
 def main():
-    with open('ndvi_chunks/1.pickle', 'rb') as handle:
+    with open('../ndvi_chunks/1.pickle', 'rb') as handle:
         data = pickle.load(handle)
 
     # print(data)

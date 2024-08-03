@@ -3,6 +3,11 @@ buiilding_data/*
 ndvi_chunks/*
 !ndvi_chunks/.gitkeep
 !buiilding_data/.gitkeep
+results/*
+!results/.gitkeep
+not_necessary/
+datasets/*
+!datasets/.gitkeep
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
@@ -163,3 +168,4 @@ cython_debug/
 #  and can be added to the global gitignore or merged into this file.  For a more nuclear
 #  option (not recommended) you can uncomment the following to ignore the entire idea folder.
 .idea/
+/not_necessary/

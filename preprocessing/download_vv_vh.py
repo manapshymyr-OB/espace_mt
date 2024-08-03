@@ -1,24 +1,28 @@
+"""
+Extracts VV and VH values based on the building geometry and inserts to the database
+"""
 import concurrent
+import math
 from concurrent.futures import ThreadPoolExecutor
 from typing import Dict, Any
 
+import numpy as np
 import planetary_computer
 import pyproj
 import pystac_client
 import rioxarray
 from pystac.item import Item
 from shapely.geometry import shape, Polygon
-from sqlalchemy import create_engine, text
-import numpy as np
-import math
+from sqlalchemy import text
 
-from utils import get_data
+import utils
 
 # Initialize database connection
-engine = create_engine('postgresql://postgres:postgres@localhost:5432/postgres')
+engine = utils.engine
 
 # Set up planetary computer subscription key and STAC catalog
-planetary_computer.settings.set_subscription_key('b6d101342e1749f794a03ee36e065971')
+planetary_computer_api_key = '<KEY>'
+planetary_computer.settings.set_subscription_key(planetary_computer_api_key)
 catalog = pystac_client.Client.open("https://planetarycomputer.microsoft.com/api/stac/v1",
                                     modifier=planetary_computer.sign_inplace)
 
@@ -95,7 +99,6 @@ def process_geom(id, geom):
     item, coverage = get_highest_intersection(items, geom)
     if item:
         try:
-            # print(item.description)
             vh_uri = item.assets["vh"].href
             vv_uri = item.assets["vv"].href
             # print(vh_uri, vv_uri)
@@ -123,9 +126,6 @@ def process_geom(id, geom):
 
             # Create a new Polygon object with the transformed coordinates
             transformed_polygon = Polygon(transformed_coordinates)
-            # print(transformed_polygon)
-            # print("Transformed Polygon:", transformed_polygon)
-            # Display the reprojected bounding box
             vh_clip = vh.rio.clip_box(*transformed_polygon.bounds)
             vv_clip = vv.rio.clip_box(*transformed_polygon.bounds)
             mean_vh = np.mean(vh_clip.values)
@@ -137,18 +137,16 @@ def process_geom(id, geom):
             if math.isnan(mean_vv):
                 mean_vv = 'null'
             update_qry = text(f"UPDATE public.nutz_building SET vh_asc_mean = {mean_vh}, vv_asc_mean = {mean_vv} WHERE building_id = {id};")
-# 5424566
             with engine.begin() as conn:  # Ensures the connection is properly closed after operation
                 conn.execute(update_qry)
         except Exception as e:
             print(e)
-    else:
-        print('dasdsa')
+
     return id, coverage
 
 
 def main():
-    data = get_data()
+    data = utils.get_data()
     # print(data)
     with ThreadPoolExecutor(max_workers=20) as executor:
         futures = [executor.submit(process_geom, id, geom) for id, geom in data.items()]

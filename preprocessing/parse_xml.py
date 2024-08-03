@@ -1,15 +1,16 @@
-# parses .meta4 file to download tiff files
+"""
+parses .meta4 files in resources to download tiff files from https://geodaten.bayern.de/opengeodata/OpenDataDetail.html?pn=dop40
+"""
+
 import os
 import requests
 from xml.etree import ElementTree as ET
 from multiprocessing.pool import ThreadPool
 
-
-
 # dir to metadata
-resources_dir = 'resources'
+resources_dir = '../resources'
 # dir to store raster data
-raster_data_dir = 'raster_data'
+raster_data_dir = '../raster_data'
 
 if not  os.path.exists(raster_data_dir):
    # Create a new directory because it does not exist
@@ -88,12 +89,3 @@ number_of_files = len(urls_to_download)
 # download in parallel
 p = ThreadPool(10)
 xs = p.map(download_file, urls_to_download)
-
-# if __name__ == "__main__":
-#     metalink_url = "YOUR_METALINK_URL_HERE"
-#     output_directory = "YOUR_OUTPUT_DIRECTORY_HERE"
-#
-#     if not os.path.exists(output_directory):
-#         os.makedirs(output_directory)
-
-# download_metalink(metalink_url, output_directory)

@@ -1,3 +1,8 @@
+"""
+Used to dump raster data into PostgreSQL database.
+raster2pgsql has to be set up
+"""
+
 import os
 import subprocess
 from multiprocessing.pool import ThreadPool
@@ -6,7 +11,7 @@ from multiprocessing.pool import ThreadPool
 DB_USER = 'postgres'
 DB_NAME = 'postgres'
 DB_HOST = 'localhost'
-raster_dir = '/mnt/storage/MT/espace_mt/raster_data'
+raster_dir = '../raster_data'
 rasters = os.listdir(raster_dir)
 total = len(rasters)
 
