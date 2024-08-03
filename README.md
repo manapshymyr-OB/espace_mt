@@ -2,7 +2,7 @@
 This repository contains scripts that has been used during the Master's Thesis on topic **Attribute-based Classification of Industrial Building with OpenStreetMap and Remote Sensing Data in Bavaria**
 by Manap Shymyr (manap.shymyr@tum.de).
 
-During this thesis Python programming language and PostgreSQL with Postgis extension has been used. Therefore, the installation of the PostgreSQL is required. Otherwise, you can use datasets that are available to download via link (https://syncandshare.lrz.de/getlink/fi4nJZEmieKbZJ1B4hvGUo/) to datasets and reproduce the results using the scripts in .
+During this thesis Python programming language and PostgreSQL with Postgis extension has been used. Therefore, the installation of the PostgreSQL is required.
 
 Steps to reproduce:
 1. Download vector data (actual land use, building footprint and OSM) and store them to PostgreSQL using the QGIS.
