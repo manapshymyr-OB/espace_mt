@@ -39,5 +39,5 @@ Steps to reproduce:
 
 
 The final dataset used for classification can be downloaded from and used with scripts in \classification:
-1. https://syncandshare.lrz.de/getlink/fi4nJZEmieKbZJ1B4hvGUo/
-2. https://drive.google.com/drive/folders/1fyLSjT0nB8mrC_kLWKMw7yH50e6i5eBd?usp=sharing
+1. Download from [LRZ Sync+Share](https://syncandshare.lrz.de/getlink/fi4nJZEmieKbZJ1B4hvGUo)
+2. Download from [Google Drive](https://drive.google.com/drive/folders/1fyLSjT0nB8mrC_kLWKMw7yH50e6i5eBd?usp=sharing)
